@@ -1,10 +1,19 @@
-package goAuth
+package auth
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	jwt "github.com/dgrijalva/jwt-go"
+)
+
+const (
+	PW_SALT_BYTES = 32
+	PW_HASH_BYTES = 64
+	BCRYPT_COST   = 1
 )
 
 var secret = []byte("mySuperSecretYolo")
@@ -17,7 +26,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-// GetToken is token from a email, and name
+// GetToken create a token from a email, and name
 func GetToken(email, name string, expire time.Duration) string {
 	// Expires the token and cookie in expire
 	expireToken := time.Now().Add(expire).Unix()
@@ -57,4 +66,20 @@ func ValidateToken(tokenReceived string) (bool, *Claims) {
 		return true, claims
 	}
 	return false, nil
+}
+
+// GetUserFromAuth Return User if the
+func GetUserFromAuth(a string) error {
+	return errors.New("user is not auth")
+}
+
+// SaltPassword use bcrypt to salt a password
+func SaltPassword(p string) (string, error) {
+	a, err := bcrypt.GenerateFromPassword([]byte(p), BCRYPT_COST)
+	return string(a), err
+}
+
+// CompareHashAndPassword use bcrypt to compare a password
+func CompareHashAndPassword(hashedPassword, password []byte) error {
+	return bcrypt.CompareHashAndPassword(hashedPassword, password)
 }

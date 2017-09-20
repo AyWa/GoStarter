@@ -1,4 +1,4 @@
-package goAuth_test
+package auth_test
 
 import (
 	"testing"
@@ -7,11 +7,11 @@ import (
 	"github.com/aywa/goNotify/auth"
 )
 
-var tokenHashed string = goAuth.GetToken("test@gmail.com", "test", time.Hour)
+var tokenHashed string = auth.GetToken("test@gmail.com", "test", time.Hour)
 var fakeTokenHashed string = "dadadaIAMFAAAKKKEE"
 
 func TestValidateToken(t *testing.T) {
-	tokenRead, Claims := goAuth.ValidateToken(tokenHashed)
+	tokenRead, Claims := auth.ValidateToken(tokenHashed)
 	if !tokenRead {
 		t.Error("should expect to be true")
 	}
@@ -22,7 +22,7 @@ func TestValidateToken(t *testing.T) {
 		t.Error("userName should be test")
 	}
 
-	fakeTokenRead, fakeClaims := goAuth.ValidateToken(fakeTokenHashed)
+	fakeTokenRead, fakeClaims := auth.ValidateToken(fakeTokenHashed)
 	if fakeTokenRead {
 		t.Error("should expect to be false")
 	}

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"strconv"
 
+	"github.com/aywa/goNotify/api"
 	"github.com/aywa/goNotify/config"
+	_ "github.com/aywa/goNotify/db"
 )
 
 func main() {
-	myFlags := config.GetFlag()
 	mySettings := config.GetSetting()
-	fmt.Println(*myFlags.IsDev)
-	fmt.Println(mySettings.Hostname)
+	api.StartAPI(strconv.Itoa(mySettings.Port))
 }
