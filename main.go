@@ -5,7 +5,6 @@ import (
 
 	"github.com/aywa/goNotify/api"
 	"github.com/aywa/goNotify/config"
-	_ "github.com/aywa/goNotify/db"
 )
 
 func main() {

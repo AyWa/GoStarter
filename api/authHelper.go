@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/aywa/goNotify/auth"
 )
@@ -23,7 +24,7 @@ func (h ErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// err handler
 	httpErr := h(w, r)
 	if httpErr.E != nil {
-		log.Output(1, httpErr.E.Error())
+		log.Output(1, httpErr.E.Error()+" HTTPCode: "+strconv.Itoa(httpErr.HTTPCode))
 		http.Error(w, httpErr.M, httpErr.HTTPCode)
 		return
 	}

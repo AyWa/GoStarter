@@ -31,3 +31,39 @@ func TestValidateToken(t *testing.T) {
 	}
 	println(fakeClaims)
 }
+
+var password = "myTest13213Password."
+
+func TestSaltPasswordAndCompare(t *testing.T) {
+	saltP, err := auth.SaltPassword(password)
+	if err != nil {
+		t.Error("should not have error when salt a string")
+	}
+	err = auth.CompareHashAndPassword([]byte(saltP), []byte(password))
+	if err != nil {
+		t.Error("should not return an error if we compare the password and the salt one")
+	}
+}
+
+func TestCompareWrongPassword(t *testing.T) {
+	fakeHP, _ := auth.SaltPassword("random")
+	err = auth.CompareHashAndPassword([]byte(fakeHP), []byte(password))
+	if err == nil {
+		t.Error("should return an error if we compare wrong salt and a password")
+	}
+}
+
+func TestGetUserFromAuth(t *testing.T) {
+	c, err := auth.GetUserFromAuth(tokenHashed)
+	if err != nil {
+		t.Error("should not return an error if token is valid")
+	}
+	if c.Email != "test@gmail.com" && c.FirstName != "test" {
+		t.Error("should return a Claims with the good information")
+	}
+	_, err = auth.GetUserFromAuth(fakeTokenHashed)
+
+	if err == nil {
+		t.Error("should return an error if token is not valid")
+	}
+}
