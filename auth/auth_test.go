@@ -7,7 +7,7 @@ import (
 	"github.com/aywa/goNotify/auth"
 )
 
-var tokenHashed string = auth.GetToken("test@gmail.com", "test", time.Hour)
+var tokenHashed, err = auth.GetToken("test@gmail.com", "test", time.Hour)
 var fakeTokenHashed string = "dadadaIAMFAAAKKKEE"
 
 func TestValidateToken(t *testing.T) {
@@ -18,7 +18,7 @@ func TestValidateToken(t *testing.T) {
 	if !(Claims.Email == "test@gmail.com") {
 		t.Error("email should be test@gmail.com")
 	}
-	if !(Claims.UserName == "test") {
+	if !(Claims.FirstName == "test") {
 		t.Error("userName should be test")
 	}
 

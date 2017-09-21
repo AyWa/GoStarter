@@ -5,11 +5,12 @@ import (
 
 	"github.com/aywa/goNotify/auth"
 	"github.com/aywa/goNotify/config"
+	"github.com/aywa/goUtil"
 )
 
 var schema = `CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-	password TEXT,
+	password  TEXT,
   first_name TEXT,
   last_name TEXT,
   email TEXT UNIQUE NOT NULL
@@ -17,28 +18,23 @@ var schema = `CREATE TABLE users (
 
 // User is the struct of the user schema
 type User struct {
-	ID        int    `db:"id"`
-	Password  string `db:"password"`
-	FirstName string `db:"first_name"`
-	LastName  string `db:"last_name"`
-	Email     string `db:"email"`
+	ID        int    `db:"id" json:"id,omitempty"`
+	Password  string `db:"password" json:"password,omitempty"`
+	FirstName string `db:"first_name" json:"firstName,omitempty"`
+	LastName  string `db:"last_name" json:"lastName,omitempty"`
+	Email     string `db:"email" json:"email"`
 }
 
 func init() {
 	if *config.GetFlag().ShouldInitDb {
 		fmt.Println("initialize user table")
 		_, err := db.Exec(schema)
-		if err != nil {
-			panic(err)
-		}
-		tx := db.MustBegin()
-		tx.MustExec("INSERT INTO users (first_name, last_name, email) VALUES ($1, $2, $3)", "Jason", "Moiron", "jmoiron@jmoiron.net")
-		tx.NamedExec("INSERT INTO users (first_name, last_name, email) VALUES (:first_name, :last_name, :email)", &User{FirstName: "Jane", LastName: "Citizen", Email: "jane.citzen@example.com"})
-		tx.Commit()
+		goUtil.ErrorPanic(err)
 		CreateUser(&User{FirstName: "Marc", LastName: "Hurabielle", Email: "marc.hurabielle@gmail.com", Password: "secret"})
+		CreateUser(&User{FirstName: "Cho", LastName: "Hura", Email: "cho.hurabielle@gmail.com", Password: "secret"})
 		people := []User{}
-		db.Select(&people, "SELECT * FROM users")
-		fmt.Println(people)
+		err = db.Select(&people, "SELECT * FROM users ORDER BY first_name ASC")
+		goUtil.ErrorPanic(err)
 		for _, p := range people {
 			fmt.Println(p)
 		}
@@ -48,16 +44,23 @@ func init() {
 // CreateUser create a user in a db (salt the password too)
 func CreateUser(u *User) (err error) {
 	u.Password, err = auth.SaltPassword(u.Password)
-	if err != nil {
-		println(err)
-		return err
-	}
-	fmt.Println(*u)
+	goUtil.ErrorHandler(err, goUtil.ErrorLogger)
 	tx := db.MustBegin()
 	tx.NamedExec("INSERT INTO users (password, first_name, last_name, email) VALUES (:password, :first_name, :last_name, :email)", u)
 	err = tx.Commit()
-	if err != nil {
-		println(err)
-	}
+	goUtil.ErrorHandler(err, goUtil.ErrorLogger)
 	return err
+}
+
+// CheckCredential take a user and check if the password is same as the bd
+func CheckCredential(uToCheck User) (uFromBd User, err error) {
+	err = db.Get(&uFromBd, "SELECT * FROM users WHERE email=$1", uToCheck.Email)
+	goUtil.ErrorHandler(err, goUtil.ErrorLogger)
+	return uFromBd, auth.CompareHashAndPassword([]byte(uFromBd.Password), []byte(uToCheck.Password))
+}
+
+// GetPrivateUser return a user with private info
+func GetPrivateUser(email string) (uFromBd User, err error) {
+	err = db.Get(&uFromBd, "SELECT first_name, last_name, email FROM users WHERE email=$1", email)
+	return uFromBd, err
 }

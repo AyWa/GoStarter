@@ -13,27 +13,27 @@ import (
 const (
 	PW_SALT_BYTES = 32
 	PW_HASH_BYTES = 64
-	BCRYPT_COST   = 1
+	BcryptCost    = 1
 )
 
 var secret = []byte("mySuperSecretYolo")
 
 // Claims is the struct of or jwt
 type Claims struct {
-	Email    string `json:"email"`
-	UserName string `json:"userName"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstname"`
 	// recommended having
 	jwt.StandardClaims
 }
 
 // GetToken create a token from a email, and name
-func GetToken(email, name string, expire time.Duration) string {
+func GetToken(email, firstName string, expire time.Duration) (string, error) {
 	// Expires the token and cookie in expire
 	expireToken := time.Now().Add(expire).Unix()
 
 	claims := Claims{
 		email,
-		name,
+		firstName,
 		jwt.StandardClaims{
 			ExpiresAt: expireToken,
 			Issuer:    "localhost:9000",
@@ -43,9 +43,9 @@ func GetToken(email, name string, expire time.Duration) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Signs the token with a secret.
-	signedToken, _ := token.SignedString(secret)
+	signedToken, err := token.SignedString(secret)
 
-	return signedToken
+	return signedToken, err
 }
 
 // ValidateToken a token from a email, and name
@@ -68,14 +68,18 @@ func ValidateToken(tokenReceived string) (bool, *Claims) {
 	return false, nil
 }
 
-// GetUserFromAuth Return User if the
-func GetUserFromAuth(a string) error {
-	return errors.New("user is not auth")
+// GetUserFromAuth Return a claims if user is auth, and a error if not auth
+func GetUserFromAuth(a string) (Claims, error) {
+	b, claims := ValidateToken(a)
+	if !b {
+		return Claims{}, errors.New("user is not auth")
+	}
+	return *claims, nil
 }
 
 // SaltPassword use bcrypt to salt a password
 func SaltPassword(p string) (string, error) {
-	a, err := bcrypt.GenerateFromPassword([]byte(p), BCRYPT_COST)
+	a, err := bcrypt.GenerateFromPassword([]byte(p), BcryptCost)
 	return string(a), err
 }
 
